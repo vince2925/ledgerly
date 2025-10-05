@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api, AuditTemplate, AuditTemplateCreate, TemplateStatus, TemplateComment } from "@/lib/api";
+import { api, AuditTemplate, AuditTemplateCreate, TemplateStatus, TemplateComment, TemplateVersion, Attachment } from "@/lib/api";
 
 export default function Audits() {
   const [templates, setTemplates] = useState<AuditTemplate[]>([]);
@@ -24,6 +24,16 @@ export default function Audits() {
   const [comments, setComments] = useState<TemplateComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
+  const [showVersionsModal, setShowVersionsModal] = useState(false);
+  const [selectedTemplateForVersions, setSelectedTemplateForVersions] = useState<AuditTemplate | null>(null);
+  const [versions, setVersions] = useState<TemplateVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [selectedVersionContent, setSelectedVersionContent] = useState<TemplateVersion | null>(null);
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
+  const [selectedTemplateForAttachments, setSelectedTemplateForAttachments] = useState<AuditTemplate | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -118,6 +128,94 @@ export default function Audits() {
       setComments(commentsData);
     } catch (err) {
       console.error("Error deleting comment:", err);
+    }
+  };
+
+  const handleViewVersions = async (template: AuditTemplate) => {
+    setSelectedTemplateForVersions(template);
+    setShowVersionsModal(true);
+    setSelectedVersionContent(null);
+    try {
+      setLoadingVersions(true);
+      const versionsData = await api.getVersions(template.id);
+      setVersions(versionsData);
+    } catch (err) {
+      console.error("Error fetching versions:", err);
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const handleViewVersionContent = async (version: TemplateVersion) => {
+    setSelectedVersionContent(version);
+  };
+
+  const handleRestoreVersion = async (versionNumber: number) => {
+    if (!selectedTemplateForVersions) return;
+    if (!confirm(`Are you sure you want to restore to version ${versionNumber}?`)) return;
+
+    try {
+      await api.restoreVersion(selectedTemplateForVersions.id, versionNumber);
+      setShowVersionsModal(false);
+      setSelectedVersionContent(null);
+      await fetchTemplates();
+    } catch (err) {
+      console.error("Error restoring version:", err);
+    }
+  };
+
+  const handleViewAttachments = async (template: AuditTemplate) => {
+    setSelectedTemplateForAttachments(template);
+    setShowAttachmentsModal(true);
+    try {
+      setLoadingAttachments(true);
+      const attachmentsData = await api.getTemplateAttachments(template.id);
+      setAttachments(attachmentsData);
+    } catch (err) {
+      console.error("Error fetching attachments:", err);
+    } finally {
+      setLoadingAttachments(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedTemplateForAttachments || !e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    try {
+      setUploadingFile(true);
+      await api.uploadTemplateAttachment(selectedTemplateForAttachments.id, file);
+      const attachmentsData = await api.getTemplateAttachments(selectedTemplateForAttachments.id);
+      setAttachments(attachmentsData);
+      e.target.value = "";
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      setError("Failed to upload file");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDownloadAttachment = async (attachmentId: number) => {
+    if (!selectedTemplateForAttachments) return;
+
+    try {
+      await api.downloadTemplateAttachment(selectedTemplateForAttachments.id, attachmentId);
+    } catch (err) {
+      console.error("Error downloading attachment:", err);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: number) => {
+    if (!selectedTemplateForAttachments) return;
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
+
+    try {
+      await api.deleteTemplateAttachment(selectedTemplateForAttachments.id, attachmentId);
+      const attachmentsData = await api.getTemplateAttachments(selectedTemplateForAttachments.id);
+      setAttachments(attachmentsData);
+    } catch (err) {
+      console.error("Error deleting attachment:", err);
     }
   };
 
@@ -295,10 +393,22 @@ export default function Audits() {
                           </div>
                         )}
                         <p className="mt-2 text-xs text-gray-400">
-                          Created: {new Date(template.created_at).toLocaleDateString()}
+                          Created: {new Date(template.created_at).toLocaleDateString()} | Version: {template.version}
                         </p>
                       </div>
                       <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => handleViewVersions(template)}
+                          className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        >
+                          History
+                        </button>
+                        <button
+                          onClick={() => handleViewAttachments(template)}
+                          className="text-green-600 hover:text-green-700 text-sm font-medium"
+                        >
+                          Files
+                        </button>
                         <button
                           onClick={() => handleViewComments(template)}
                           className="text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -540,6 +650,216 @@ export default function Audits() {
               >
                 Add
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVersionsModal && selectedTemplateForVersions && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full p-6 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Version History - {selectedTemplateForVersions.name}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowVersionsModal(false);
+                  setSelectedTemplateForVersions(null);
+                  setVersions([]);
+                  setSelectedVersionContent(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex gap-4 flex-1 overflow-hidden">
+              <div className="w-1/3 border-r border-gray-200 pr-4 overflow-y-auto">
+                {loadingVersions ? (
+                  <p className="text-center text-gray-500 py-4">Loading versions...</p>
+                ) : versions.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">
+                    No version history yet. Edit this template to create versions.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {versions.map((version) => (
+                      <div
+                        key={version.id}
+                        className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                          selectedVersionContent?.id === version.id
+                            ? "border-purple-500 bg-purple-50"
+                            : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleViewVersionContent(version)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              Version {version.version}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              by {version.changed_by}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(version.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {selectedVersionContent ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Name</h4>
+                      <p className="text-sm text-gray-900">{selectedVersionContent.name}</p>
+                    </div>
+
+                    {selectedVersionContent.description && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
+                        <p className="text-sm text-gray-900">{selectedVersionContent.description}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        selectedVersionContent.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                        selectedVersionContent.status === 'active' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedVersionContent.status.charAt(0).toUpperCase() + selectedVersionContent.status.slice(1)}
+                      </span>
+                    </div>
+
+                    {selectedVersionContent.tags && selectedVersionContent.tags.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Tags</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedVersionContent.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Content</h4>
+                      <pre className="text-sm text-gray-900 bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
+                        {selectedVersionContent.content}
+                      </pre>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() => handleRestoreVersion(selectedVersionContent.version)}
+                        className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                      >
+                        Restore This Version
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Select a version to view details</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAttachmentsModal && selectedTemplateForAttachments && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Attachments - {selectedTemplateForAttachments.name}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAttachmentsModal(false);
+                  setSelectedTemplateForAttachments(null);
+                  setAttachments([]);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label
+                htmlFor="file-upload"
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white ${
+                  uploadingFile
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 cursor-pointer"
+                }`}
+              >
+                {uploadingFile ? "Uploading..." : "Upload File"}
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={uploadingFile}
+                />
+              </label>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {loadingAttachments ? (
+                <p className="text-center text-gray-500 py-4">Loading attachments...</p>
+              ) : attachments.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">
+                  No attachments yet. Upload your first file!
+                </p>
+              ) : (
+                attachments.map((attachment) => (
+                  <div key={attachment.id} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{attachment.original_filename}</p>
+                        <p className="text-xs text-gray-500">
+                          {(attachment.file_size / 1024).toFixed(2)} KB | {attachment.mime_type}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Uploaded by {attachment.uploaded_by} on {new Date(attachment.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => handleDownloadAttachment(attachment.id)}
+                          className="text-green-600 hover:text-green-700 text-sm"
+                        >
+                          Download
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAttachment(attachment.id)}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

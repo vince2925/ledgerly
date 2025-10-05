@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
-from ..models import AuditTemplate
+from ..models import AuditTemplate, TemplateVersion
 from ..schemas import AuditTemplateCreate, AuditTemplateUpdate, AuditTemplateResponse
 from ..auth import get_current_user
 
@@ -41,14 +41,36 @@ def get_template(template_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{template_id}", response_model=AuditTemplateResponse)
-def update_template(template_id: int, template_update: AuditTemplateUpdate, db: Session = Depends(get_db)):
+def update_template(
+    template_id: int,
+    template_update: AuditTemplateUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
     template = db.query(AuditTemplate).filter(AuditTemplate.id == template_id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 
+    # Create version snapshot before updating
+    version_snapshot = TemplateVersion(
+        template_id=template.id,
+        version=template.version,
+        name=template.name,
+        description=template.description,
+        content=template.content,
+        tags=template.tags,
+        status=template.status,
+        changed_by=current_user.get("preferred_username", current_user.get("email", "Unknown")),
+    )
+    db.add(version_snapshot)
+
+    # Update template
     update_data = template_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(template, key, value)
+
+    # Increment version
+    template.version += 1
 
     db.commit()
     db.refresh(template)

@@ -15,6 +15,7 @@ export interface AuditTemplate {
   content: string;
   tags: string[];
   status: TemplateStatus;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +44,31 @@ export interface TemplateComment {
 
 export interface TemplateCommentCreate {
   content: string;
+}
+
+export interface TemplateVersion {
+  id: number;
+  template_id: number;
+  version: number;
+  name: string;
+  description?: string;
+  content: string;
+  tags: string[];
+  status: string;
+  changed_by: string;
+  created_at: string;
+}
+
+export interface Attachment {
+  id: number;
+  template_id?: number;
+  report_id?: number;
+  filename: string;
+  original_filename: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_by: string;
+  created_at: string;
 }
 
 class ApiClient {
@@ -136,6 +162,82 @@ class ApiClient {
       headers: this.getHeaders(),
     });
     if (!response.ok) throw new Error("Failed to delete comment");
+  }
+
+  async getVersions(templateId: number): Promise<TemplateVersion[]> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/versions/`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch versions");
+    return response.json();
+  }
+
+  async getVersion(templateId: number, versionNumber: number): Promise<TemplateVersion> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/versions/${versionNumber}`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch version");
+    return response.json();
+  }
+
+  async restoreVersion(templateId: number, versionNumber: number): Promise<{ message: string; current_version: number }> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/versions/${versionNumber}/restore`, {
+      method: "POST",
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to restore version");
+    return response.json();
+  }
+
+  async getTemplateAttachments(templateId: number): Promise<Attachment[]> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/attachments`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch attachments");
+    return response.json();
+  }
+
+  async uploadTemplateAttachment(templateId: number, file: File): Promise<Attachment> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/attachments`, {
+      method: "POST",
+      headers: keycloak.getAuthHeader(),
+      body: formData,
+    });
+    if (!response.ok) throw new Error("Failed to upload attachment");
+    return response.json();
+  }
+
+  async downloadTemplateAttachment(templateId: number, attachmentId: number): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/attachments/${attachmentId}/download`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to download attachment");
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("content-disposition");
+    const filename = contentDisposition
+      ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
+      : "download";
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
+  async deleteTemplateAttachment(templateId: number, attachmentId: number): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/audit/templates/${templateId}/attachments/${attachmentId}`, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete attachment");
   }
 }
 

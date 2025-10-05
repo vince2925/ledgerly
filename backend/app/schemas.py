@@ -32,6 +32,7 @@ class AuditTemplateUpdate(BaseModel):
 
 class AuditTemplateResponse(AuditTemplateBase):
     id: int
+    version: int
     created_at: datetime
     updated_at: datetime
 
@@ -66,6 +67,37 @@ class TemplateCommentResponse(BaseModel):
     template_id: int
     author: str
     content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TemplateVersionResponse(BaseModel):
+    id: int
+    template_id: int
+    version: int
+    name: str
+    description: Optional[str] = None
+    content: str
+    tags: List[str] = []
+    status: str
+    changed_by: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AttachmentResponse(BaseModel):
+    id: int
+    template_id: Optional[int] = None
+    report_id: Optional[int] = None
+    filename: str
+    original_filename: str
+    file_size: int
+    mime_type: str
+    uploaded_by: str
     created_at: datetime
 
     class Config:
