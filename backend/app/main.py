@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import templates, reports, comments, versions, attachments
+from .routers import templates, reports, comments, versions, attachments, analytics
 
 app = FastAPI(title="Ledgerly Backend", version="0.1.0")
 
@@ -17,6 +17,7 @@ app.include_router(reports.router)
 app.include_router(comments.router)
 app.include_router(versions.router)
 app.include_router(attachments.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

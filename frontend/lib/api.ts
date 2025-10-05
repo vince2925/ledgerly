@@ -71,6 +71,56 @@ export interface Attachment {
   created_at: string;
 }
 
+export interface DashboardStats {
+  overview: {
+    total_templates: number;
+    total_reports: number;
+    total_comments: number;
+    total_attachments: number;
+    recent_templates_30d: number;
+    recent_reports_30d: number;
+    total_storage_bytes: number;
+    total_storage_mb: number;
+  };
+  templates_by_status: {
+    draft: number;
+    active: number;
+    archived: number;
+  };
+  trends: {
+    templates_per_month: Array<{
+      year: number;
+      month: number;
+      count: number;
+      label: string;
+    }>;
+    reports_per_month: Array<{
+      year: number;
+      month: number;
+      count: number;
+      label: string;
+    }>;
+  };
+  top_templates: {
+    most_commented: Array<{
+      id: number;
+      name: string;
+      comments: number;
+    }>;
+    most_attachments: Array<{
+      id: number;
+      name: string;
+      attachments: number;
+    }>;
+  };
+}
+
+export interface Activity {
+  type: string;
+  timestamp: string;
+  data: any;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -238,6 +288,22 @@ class ApiClient {
       headers: this.getHeaders(),
     });
     if (!response.ok) throw new Error("Failed to delete attachment");
+  }
+
+  async getDashboardStats(): Promise<DashboardStats> {
+    const response = await fetch(`${this.baseUrl}/analytics/dashboard`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+    return response.json();
+  }
+
+  async getRecentActivity(limit: number = 20): Promise<Activity[]> {
+    const response = await fetch(`${this.baseUrl}/analytics/activity?limit=${limit}`, {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch activity");
+    return response.json();
   }
 }
 
