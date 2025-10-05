@@ -15,64 +15,81 @@ This document tracks all planned features for the Ledgerly audit management plat
 - RESTful API with FastAPI
 - Docker deployment setup
 
+### ✅ Recently Completed Features
+- **Tags/Labels**: Add and filter templates by tags
+- **Status Field**: Draft, Active, Archived status with filtering
+- **Due Dates**: Track deadlines for audit reports
+- **Audit Comments**: Comment system for templates with add/delete
+- **Template Version Control**: Full version history, restore, and tracking
+- **File Attachments & Evidence**: Upload/download/delete files for templates and reports
+- **Dashboard & Analytics**: Real-time dashboard with comprehensive statistics and trends
+- **Audit Checklists & Workflows**: Create checklists with dependencies and progress tracking
+
 ---
 
 ## 🎯 **Feature Backlog**
 
 ### 1. **Template Version Control**
-**Status**: 📋 Planned
+**Status**: ✅ Implemented
 **Priority**: High
 **Effort**: Medium
 
 **Description**: Track and manage changes to audit templates over time
 
-**Features**:
-- Track changes to audit templates over time
-- View revision history with diff comparison
-- Rollback to previous versions
-- Compare versions side-by-side
-- Audit trail of who changed what and when
-- Tag specific versions as "stable" or "approved"
+**Implemented Features**:
+- ✅ Track changes to audit templates over time
+- ✅ View revision history
+- ✅ Rollback to previous versions
+- ✅ Audit trail of who changed what and when
+- ✅ Version number display on templates
+- ❌ Compare versions side-by-side (TODO)
+- ❌ Tag specific versions as "stable" or "approved" (TODO)
 
-**Technical Requirements**:
-- Add `template_versions` table
-- Store JSON diff between versions
-- Implement version comparison endpoint
-- Add version selector in UI
+**Technical Implementation**:
+- ✅ Added `template_versions` table
+- ✅ Automatic version snapshots on update
+- ✅ Version history endpoint
+- ✅ Restore version endpoint
+- ✅ Version selector UI with modal
+- ❌ JSON diff comparison (TODO)
 
-**User Stories**:
-- As an auditor, I want to see what changed in a template so I can understand the evolution
-- As a manager, I want to rollback to a previous version if changes were incorrect
-- As a compliance officer, I want to track who made changes for audit purposes
+**Remaining Work**:
+- Implement side-by-side diff comparison
+- Add version tagging (stable/approved)
+- Add version comparison UI
 
 ---
 
 ### 2. **Collaborative Auditing**
-**Status**: 📋 Planned
+**Status**: ⚠️ Partially Implemented
 **Priority**: High
 **Effort**: High
 
 **Description**: Enable team collaboration on audit projects
 
-**Features**:
-- **Comments & Notes**: Add comments to specific sections of reports
-- **Assignments**: Assign audit tasks to team members
-- **Review Workflow**: Submit → Review → Approve workflow
-- **Real-time Collaboration**: Multiple auditors working on same audit (WebSocket)
-- **Activity Feed**: See who's working on what in real-time
-- **@Mentions**: Tag team members in comments
-- **Conflict Resolution**: Handle simultaneous edits
+**Implemented Features**:
+- ✅ **Comments & Notes**: Template comment system with add/delete
+- ❌ **Assignments**: Assign audit tasks to team members (TODO)
+- ❌ **Review Workflow**: Submit → Review → Approve workflow (TODO)
+- ❌ **Real-time Collaboration**: WebSocket support (TODO)
+- ✅ **Activity Feed**: Recent activity tracking on dashboard
+- ❌ **@Mentions**: Tag team members (TODO)
+- ❌ **Conflict Resolution**: Handle simultaneous edits (TODO)
 
-**Technical Requirements**:
-- Add `comments`, `assignments`, `activity_log` tables
-- Implement WebSocket server for real-time updates
-- Add workflow state machine (Draft → Submitted → In Review → Approved)
-- Build notification system
+**Technical Implementation**:
+- ✅ Added `template_comments` table
+- ✅ Comment CRUD endpoints
+- ✅ Activity tracking in analytics
+- ❌ `assignments` table (TODO)
+- ❌ WebSocket server (TODO)
+- ❌ Workflow state machine (TODO)
 
-**User Stories**:
-- As a team lead, I want to assign sections of an audit to different team members
-- As an auditor, I want to add notes and questions for reviewers
-- As a reviewer, I want to see all changes and approve/reject them
+**Remaining Work**:
+- Implement assignments feature
+- Add review workflow (Draft → Submitted → In Review → Approved)
+- WebSocket real-time collaboration
+- @Mentions in comments
+- Conflict resolution for simultaneous edits
 
 ---
 
@@ -108,65 +125,87 @@ This document tracks all planned features for the Ledgerly audit management plat
 ---
 
 ### 4. **File Attachments & Evidence**
-**Status**: 📋 Planned
+**Status**: ✅ Implemented
 **Priority**: High
 **Effort**: Medium
 
 **Description**: Manage supporting documents and evidence
 
-**Features**:
-- Upload supporting documents (invoices, contracts, screenshots, etc.)
-- Link files to specific audit sections
-- OCR for scanned documents (Tesseract)
-- Document preview (PDF, images, Excel)
+**Implemented Features**:
+- ✅ Upload supporting documents for templates and reports
+- ✅ Link files to templates/reports
+- ✅ Download attachments
+- ✅ Delete attachments
+- ✅ File metadata tracking (size, type, uploader, timestamp)
+- ✅ Secure storage with unique filenames
+- ❌ OCR for scanned documents (TODO)
+- ❌ Document preview (TODO)
+- ❌ Organize files in folders (TODO)
+- ❌ Version control for attachments (TODO)
+- ❌ File size limits (TODO)
+- ❌ Virus scanning (TODO)
+
+**Technical Implementation**:
+- ✅ Added `attachments` table with foreign keys
+- ✅ File upload API with multipart/form-data
+- ✅ Local file storage in uploads directory
+- ✅ File download endpoint with proper headers
+- ✅ Attachment modal UI
+- ❌ Cloud storage integration (TODO)
+- ❌ OCR service (TODO)
+- ❌ File preview component (TODO)
+- ❌ Antivirus scanning (TODO)
+
+**Remaining Work**:
+- Add file size limits and validation
+- Implement cloud storage (S3/GCS)
+- Add document preview for PDFs/images
+- Implement OCR for scanned documents
+- Add virus scanning (ClamAV)
 - Organize files in folders
 - Version control for attachments
-- Secure storage with access control
-- File size limits and virus scanning
-
-**Technical Requirements**:
-- Add `attachments` table with foreign keys to templates/reports
-- Implement file upload API with streaming
-- Add cloud storage integration (S3, Google Cloud Storage)
-- Implement OCR service for scanned documents
-- Add file preview component in frontend
-- Implement antivirus scanning (ClamAV)
-
-**User Stories**:
-- As an auditor, I want to attach invoices as evidence to my audit report
-- As a reviewer, I want to preview attachments without downloading them
-- As a compliance officer, I want OCR on scanned documents for searchability
 
 ---
 
 ### 5. **Audit Checklists & Workflows**
-**Status**: 📋 Planned
+**Status**: ✅ Implemented
 **Priority**: High
 **Effort**: Medium
 
 **Description**: Create structured audit processes with checklists
 
-**Features**:
-- Create audit checklists from templates
-- Track completion percentage
-- Mandatory vs optional items
-- Dependencies (Item B requires Item A completion)
-- Reminders and due dates
-- Progress visualization (progress bars, Gantt charts)
-- Recurring checklists
-- Checklist templates library
+**Implemented Features**:
+- ✅ Create checklists for templates and reports
+- ✅ Track completion percentage
+- ✅ Mandatory vs optional items
+- ✅ Dependencies (Item B requires Item A completion)
+- ✅ Due dates for items
+- ✅ Progress calculation (overall and mandatory)
+- ✅ Order/sequence items
+- ✅ Track who completed items and when
+- ❌ Progress visualization UI (TODO)
+- ❌ Reminders/notifications (TODO)
+- ❌ Recurring checklists (TODO)
+- ❌ Checklist templates library (TODO)
+- ❌ Gantt charts (TODO)
 
-**Technical Requirements**:
-- Add `checklists`, `checklist_items` tables
-- Implement dependency graph logic
-- Add progress calculation service
-- Create checklist UI components
-- Implement reminder notification system
+**Technical Implementation**:
+- ✅ Added `checklists` table
+- ✅ Added `checklist_items` table with self-referencing foreign key
+- ✅ Dependency validation logic
+- ✅ Progress calculation endpoint
+- ✅ Full CRUD endpoints for checklists and items
+- ✅ Frontend API integration
+- ❌ Checklist UI components (TODO)
+- ❌ Reminder notification system (TODO)
 
-**User Stories**:
-- As an auditor, I want a checklist to ensure I don't miss any audit steps
-- As a manager, I want to see completion progress across all active audits
-- As a team lead, I want to create reusable checklist templates for common audits
+**Remaining Work**:
+- Add checklist UI to templates/reports pages
+- Implement progress bars and visualizations
+- Add reminder/notification system
+- Create recurring checklist feature
+- Build checklist templates library
+- Add Gantt chart visualization
 
 ---
 
@@ -232,32 +271,42 @@ This document tracks all planned features for the Ledgerly audit management plat
 ---
 
 ### 8. **Dashboard & Analytics**
-**Status**: 📋 Planned
+**Status**: ✅ Implemented
 **Priority**: High
 **Effort**: Medium
 
 **Description**: Visualize audit data and metrics
 
-**Features**:
-- **Audit Statistics**: Number of audits, completion rates, time spent
-- **Charts & Visualizations**: Trends over time (Chart.js, Recharts)
-- **Custom Reports**: Build your own analytics views
-- **Performance Metrics**: Average time per audit, bottlenecks
-- **Compliance Tracking**: Track compliance scores across audits
-- **Exportable Dashboards**: Export charts as PNG/PDF
-- **Real-time Updates**: Live dashboard updates
+**Implemented Features**:
+- ✅ **Audit Statistics**: Templates, reports, comments, storage
+- ✅ **Charts & Visualizations**: Progress bars and trend charts
+- ✅ **Performance Metrics**: 30-day activity tracking
+- ✅ **Templates by Status**: Distribution visualization
+- ✅ **Top Templates**: Most commented and most attachments
+- ✅ **Monthly Trends**: Last 12 months data
+- ✅ **Recent Activity Feed**: Real-time activity tracking
+- ✅ **Real-time Updates**: Auto-refresh every 30 seconds
+- ❌ **Custom Reports**: Build your own views (TODO)
+- ❌ **Exportable Dashboards**: Export as PNG/PDF (TODO)
+- ❌ **Compliance Tracking**: Compliance scores (TODO)
 
-**Technical Requirements**:
-- Create analytics service with aggregation queries
-- Build dashboard UI components (React + Recharts)
-- Implement custom report builder
-- Add export functionality
-- Set up caching for performance (Redis)
+**Technical Implementation**:
+- ✅ Analytics router with aggregation queries
+- ✅ Dashboard stats endpoint
+- ✅ Activity feed endpoint
+- ✅ Dashboard UI with comprehensive visualizations
+- ✅ Auto-refresh mechanism
+- ✅ Storage usage tracking
+- ❌ Custom report builder (TODO)
+- ❌ Export functionality (TODO)
+- ❌ Redis caching (TODO)
 
-**User Stories**:
-- As a manager, I want to see audit completion trends over the last 6 months
-- As an executive, I want a high-level dashboard of all audit activities
-- As an analyst, I want to build custom reports without writing SQL
+**Remaining Work**:
+- Add custom report builder
+- Implement dashboard export (PNG/PDF)
+- Add compliance score tracking
+- Set up Redis caching for performance
+- Add more advanced chart types (line charts, pie charts)
 
 ---
 
@@ -293,32 +342,39 @@ This document tracks all planned features for the Ledgerly audit management plat
 ---
 
 ### 10. **Search & Filters**
-**Status**: 📋 Planned
+**Status**: ⚠️ Partially Implemented
 **Priority**: Medium
 **Effort**: Medium
 
 **Description**: Find audits and templates quickly
 
-**Features**:
-- **Full-text Search**: Search across all templates and reports (Elasticsearch)
-- **Advanced Filters**: Filter by date, client, status, auditor, tags
-- **Saved Searches**: Save frequently used search queries
-- **Tags/Labels**: Organize audits with custom tags
-- **Quick Actions**: Bulk operations on filtered results
-- **Search Autocomplete**: Suggest as you type
-- **Search History**: Recently searched terms
+**Implemented Features**:
+- ✅ **Tags/Labels**: Organize templates with tags
+- ✅ **Filter by Tags**: Filter templates by selected tag
+- ✅ **Filter by Status**: Filter by draft/active/archived
+- ❌ **Full-text Search**: Search across content (TODO)
+- ❌ **Advanced Filters**: Filter by date, client, auditor (TODO)
+- ❌ **Saved Searches**: Save frequently used queries (TODO)
+- ❌ **Quick Actions**: Bulk operations (TODO)
+- ❌ **Search Autocomplete**: Suggest as you type (TODO)
+- ❌ **Search History**: Recently searched terms (TODO)
 
-**Technical Requirements**:
-- Integrate Elasticsearch or PostgreSQL full-text search
-- Add `tags`, `saved_searches` tables
-- Build advanced filter UI
-- Implement bulk action endpoints
-- Add search indexing service
+**Technical Implementation**:
+- ✅ Tags field on templates (ARRAY type)
+- ✅ Tag and status filtering UI
+- ✅ Tag input component with add/remove
+- ❌ Elasticsearch/full-text search (TODO)
+- ❌ `saved_searches` table (TODO)
+- ❌ Advanced filter UI (TODO)
+- ❌ Bulk action endpoints (TODO)
 
-**User Stories**:
-- As an auditor, I want to search for all audits containing "SOX compliance"
-- As a manager, I want to filter audits by client and date range
-- As an analyst, I want to save my commonly used filters
+**Remaining Work**:
+- Implement full-text search (Elasticsearch or PostgreSQL)
+- Add advanced filters (date range, creator, etc.)
+- Saved search functionality
+- Bulk operations (delete multiple, update status)
+- Search autocomplete
+- Search history tracking
 
 ---
 
@@ -483,18 +539,18 @@ This document tracks all planned features for the Ledgerly audit management plat
 
 | Feature | Priority | Effort | Status |
 |---------|----------|--------|--------|
-| Template Version Control | High | Medium | 📋 Planned |
-| File Attachments & Evidence | High | Medium | 📋 Planned |
-| Dashboard & Analytics | High | Medium | 📋 Planned |
-| Search & Filters | Medium | Medium | 📋 Planned |
+| Template Version Control | High | Medium | ✅ **Implemented** |
+| File Attachments & Evidence | High | Medium | ✅ **Implemented** |
+| Dashboard & Analytics | High | Medium | ✅ **Implemented** |
+| Search & Filters | Medium | Medium | ⚠️ Partial |
 | Audit Trail & Logging | High | Low | ⚠️ Partial |
 
 **Deliverables**:
-- Basic version control for templates
-- File upload and attachment functionality
-- Simple dashboard with key metrics
-- Full-text search across templates and reports
-- Complete audit logging
+- ✅ Version control for templates with history and restore
+- ✅ File upload and attachment functionality
+- ✅ Comprehensive dashboard with real-time stats and trends
+- ⚠️ Tag and status filtering (full-text search pending)
+- ⚠️ Basic audit logging via version history (complete logging pending)
 
 ---
 
@@ -503,15 +559,15 @@ This document tracks all planned features for the Ledgerly audit management plat
 
 | Feature | Priority | Effort | Status |
 |---------|----------|--------|--------|
-| Collaborative Auditing | High | High | 📋 Planned |
+| Collaborative Auditing | High | High | ⚠️ Partial |
 | Notifications & Reminders | High | Low | 📋 Planned |
-| Audit Checklists & Workflows | High | Medium | 📋 Planned |
+| Audit Checklists & Workflows | High | Medium | ✅ **Implemented** |
 
 **Deliverables**:
-- Comments and task assignments
-- Email and in-app notifications
-- Checklist templates and progress tracking
-- Submit → Review → Approve workflow
+- ⚠️ Comments system (done), assignments and workflows (pending)
+- ❌ Email and in-app notifications (pending)
+- ✅ Checklist backend with dependencies and progress tracking
+- ❌ Submit → Review → Approve workflow (pending)
 
 ---
 
@@ -620,6 +676,27 @@ Track these metrics to measure feature success:
 
 ---
 
-**Last Updated**: 2025-10-05
+**Last Updated**: 2025-10-05 (Updated after feature implementation sprint)
 **Maintained By**: Development Team
 **Next Review Date**: 2025-11-05
+
+---
+
+## 📈 **Recent Progress Summary**
+
+### Completed in Current Sprint:
+1. ✅ **Template Version Control** - Full version history, restore functionality, and tracking
+2. ✅ **File Attachments & Evidence** - Complete file management for templates/reports
+3. ✅ **Dashboard & Analytics** - Comprehensive real-time dashboard with trends
+4. ✅ **Audit Checklists & Workflows** - Backend complete with dependencies and progress
+5. ✅ **Tags/Labels** - Tagging and filtering system
+6. ✅ **Status Field** - Template status management
+7. ✅ **Comments System** - Add/delete comments on templates
+8. ✅ **Due Dates** - Track deadlines for reports
+
+### Next Priority Features:
+1. **Checklist UI** - Add frontend UI for checklists
+2. **Notifications & Reminders** - Email and in-app notifications
+3. **Full-text Search** - Elasticsearch integration
+4. **Assignments & Workflows** - Task assignment and review workflow
+5. **Advanced Report Features** - Rich text editor, multiple formats

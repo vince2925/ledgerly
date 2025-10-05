@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, ARRAY, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, ARRAY, Enum as SQLEnum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -30,6 +30,7 @@ class AuditTemplate(Base):
     comments = relationship("TemplateComment", back_populates="template", cascade="all, delete-orphan")
     versions = relationship("TemplateVersion", back_populates="template", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="template", cascade="all, delete-orphan")
+    checklists = relationship("Checklist", back_populates="template", cascade="all, delete-orphan")
 
 
 class AuditReport(Base):
@@ -44,6 +45,7 @@ class AuditReport(Base):
 
     template = relationship("AuditTemplate", back_populates="reports")
     attachments = relationship("Attachment", back_populates="report", cascade="all, delete-orphan")
+    checklists = relationship("Checklist", back_populates="report", cascade="all, delete-orphan")
 
 
 class TemplateComment(Base):
@@ -91,3 +93,40 @@ class Attachment(Base):
 
     template = relationship("AuditTemplate", back_populates="attachments")
     report = relationship("AuditReport", back_populates="attachments")
+
+
+class Checklist(Base):
+    __tablename__ = "checklists"
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey("audit_templates.id"), nullable=True)
+    report_id = Column(Integer, ForeignKey("audit_reports.id"), nullable=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    created_by = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    template = relationship("AuditTemplate", back_populates="checklists")
+    report = relationship("AuditReport", back_populates="checklists")
+    items = relationship("ChecklistItem", back_populates="checklist", cascade="all, delete-orphan")
+
+
+class ChecklistItem(Base):
+    __tablename__ = "checklist_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    checklist_id = Column(Integer, ForeignKey("checklists.id"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    is_completed = Column(Boolean, default=False, nullable=False)
+    is_mandatory = Column(Boolean, default=False, nullable=False)
+    order = Column(Integer, default=0, nullable=False)
+    depends_on_id = Column(Integer, ForeignKey("checklist_items.id"), nullable=True)
+    completed_by = Column(String, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    due_date = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    checklist = relationship("Checklist", back_populates="items")
+    depends_on = relationship("ChecklistItem", remote_side=[id], backref="dependent_items")
